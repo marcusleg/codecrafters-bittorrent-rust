@@ -13,18 +13,22 @@ fn decode_bencoded_value(encoded_value: &str) -> serde_json::Value {
     if encoded_value.chars().next().unwrap().is_digit(10) {
         return decode_string(&encoded_value);
     } else if bencode_type.eq(&'i') {
-        // Example: "i52e" -> "52"
-        let number: i64 = encoded_value
-            .strip_prefix("i")
-            .unwrap()
-            .strip_suffix("e")
-            .unwrap()
-            .parse()
-            .unwrap();
-        return serde_json::Value::Number(serde_json::Number::from(number));
+        return decode_integer(&encoded_value);
     } else {
         panic!("Unknown encoded value {}", encoded_value)
     }
+}
+
+fn decode_integer(encoded_value: &str) -> serde_json::Value {
+    // Example: "i52e" -> "52"
+    let number: i64 = encoded_value
+        .strip_prefix("i")
+        .unwrap()
+        .strip_suffix("e")
+        .unwrap()
+        .parse()
+        .unwrap();
+    return serde_json::Value::Number(serde_json::Number::from(number));
 }
 
 fn decode_string(encoded_value: &str) -> serde_json::Value {
