@@ -10,7 +10,7 @@ fn decode_bencoded_value(encoded_value: &str) -> serde_json::Value {
     return match bencode_type {
         'l' => decode_list(&encoded_value),
         'i' => decode_integer(&encoded_value).0,
-        _ => decode_string(&encoded_value),
+        _ => decode_string(&encoded_value).0,
     };
 }
 
@@ -18,7 +18,6 @@ fn decode_list(encoded_value: &str) -> serde_json::Value {
     let mut items: Vec<serde_json::Value> = Vec::new();
 
     let mut index_start = 1;
-    let mut index_end;
 
     let mut done = false;
 
@@ -33,17 +32,9 @@ fn decode_list(encoded_value: &str) -> serde_json::Value {
                 index_start += length + 1;
             }
             _ => {
-                let index_colon = index_start + encoded_value[index_start..].find(':').unwrap();
-                let length_string = &encoded_value[index_start..index_colon];
-                let length: usize = length_string.parse().unwrap();
-
-                index_end = index_colon + 1 + length;
-
-                let string = &encoded_value[index_colon + 1..index_end];
-
-                items.push(serde_json::Value::String(string.to_string()));
-
-                index_start = index_end;
+                let (string, length) = decode_string(&encoded_value[index_start..]);
+                items.push(string);
+                index_start += length;
             }
         }
     }
@@ -63,13 +54,17 @@ fn decode_integer(encoded_value: &str) -> (serde_json::Value, usize) {
     );
 }
 
-fn decode_string(encoded_value: &str) -> serde_json::Value {
+fn decode_string(encoded_value: &str) -> (serde_json::Value, usize) {
     // Example: "5:hello" -> "hello"
-    let colon_index = encoded_value.find(':').unwrap();
-    let number_string = &encoded_value[..colon_index];
-    let number = number_string.parse::<i64>().unwrap();
-    let string = &encoded_value[colon_index + 1..colon_index + 1 + number as usize];
-    return serde_json::Value::String(string.to_string());
+    let index_colon = encoded_value.find(':').unwrap();
+    let length_string = &encoded_value[..index_colon];
+    let length: usize = length_string.parse().unwrap();
+
+    let index_end = index_colon + 1 + length;
+
+    let string = &encoded_value[index_colon + 1..index_end];
+
+    return (serde_json::Value::String(string.to_string()), index_end);
 }
 
 // Usage: your_bittorrent.sh decode "<encoded_value>"
