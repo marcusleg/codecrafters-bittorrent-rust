@@ -6,6 +6,10 @@ use std::env;
 
 fn decode_bencoded_value(encoded_value: &str) -> serde_json::Value {
     // If encoded_value starts with a digit, it's a number
+    let Some(bencode_type) = encoded_value.chars().next() else {
+        panic!("Bencode string is empty")
+    };
+
     if encoded_value.chars().next().unwrap().is_digit(10) {
         // Example: "5:hello" -> "hello"
         let colon_index = encoded_value.find(':').unwrap();
@@ -13,8 +17,18 @@ fn decode_bencoded_value(encoded_value: &str) -> serde_json::Value {
         let number = number_string.parse::<i64>().unwrap();
         let string = &encoded_value[colon_index + 1..colon_index + 1 + number as usize];
         return serde_json::Value::String(string.to_string());
+    } else if bencode_type.eq(&'i') {
+        // Example: "i52e" -> "52"
+        let number: i64 = encoded_value
+            .strip_prefix("i")
+            .unwrap()
+            .strip_suffix("e")
+            .unwrap()
+            .parse()
+            .unwrap();
+        return serde_json::Value::Number(serde_json::Number::from(number));
     } else {
-        panic!("Unhandled encoded value: {}", encoded_value)
+        panic!("Unknown encoded value {}", encoded_value)
     }
 }
 
