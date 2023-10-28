@@ -8,9 +8,51 @@ fn decode_bencoded_value(encoded_value: &str) -> serde_json::Value {
     let bencode_type = encoded_value.chars().next().unwrap();
 
     return match bencode_type {
+        'l' => decode_list(&encoded_value),
         'i' => decode_integer(&encoded_value),
         _ => decode_string(&encoded_value),
     };
+}
+
+fn decode_list(encoded_value: &str) -> serde_json::Value {
+    let mut items: Vec<serde_json::Value> = Vec::new();
+
+    let mut index_start = 1;
+    let mut index_end;
+
+    let mut done = false;
+
+    while !done {
+        let symbol = encoded_value.chars().nth(index_start).unwrap();
+
+        match symbol {
+            'e' => done = true,
+            'i' => {
+                let index_end = index_start + encoded_value[index_start..].find('e').unwrap();
+
+                let number_string = &encoded_value[index_start + 1..index_end];
+                let number: usize = number_string.parse().unwrap();
+
+                items.push(serde_json::Value::Number(serde_json::Number::from(number)));
+
+                index_start = index_end + 1;
+            }
+            _ => {
+                let index_colon = index_start + encoded_value[index_start..].find(':').unwrap();
+                let length_string = &encoded_value[index_start..index_colon];
+                let length: usize = length_string.parse().unwrap();
+
+                index_end = index_colon + 1 + length;
+
+                let string = &encoded_value[index_colon + 1..index_end];
+
+                items.push(serde_json::Value::String(string.to_string()));
+
+                index_start = index_end;
+            }
+        }
+    }
+    return serde_json::Value::Array(items);
 }
 
 fn decode_integer(encoded_value: &str) -> serde_json::Value {
