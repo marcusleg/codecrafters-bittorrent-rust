@@ -5,18 +5,12 @@ use std::env;
 // use serde_bencode
 
 fn decode_bencoded_value(encoded_value: &str) -> serde_json::Value {
-    // If encoded_value starts with a digit, it's a number
-    let Some(bencode_type) = encoded_value.chars().next() else {
-        panic!("Bencode string is empty")
-    };
+    let bencode_type = encoded_value.chars().next().unwrap();
 
-    if encoded_value.chars().next().unwrap().is_digit(10) {
-        return decode_string(&encoded_value);
-    } else if bencode_type.eq(&'i') {
-        return decode_integer(&encoded_value);
-    } else {
-        panic!("Unknown encoded value {}", encoded_value)
-    }
+    return match bencode_type {
+        'i' => decode_integer(&encoded_value),
+        _ => decode_string(&encoded_value),
+    };
 }
 
 fn decode_integer(encoded_value: &str) -> serde_json::Value {
