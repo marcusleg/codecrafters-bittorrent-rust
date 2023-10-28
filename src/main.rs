@@ -41,7 +41,7 @@ fn decode_list(encoded_value: &str) -> serde_json::Value {
 }
 
 fn decode_integer(encoded_value: &str) -> (serde_json::Value, usize) {
-    // Example: "i52e" -> "52"
+    // Example: "i52e" -> ("52", 4)
     let index_end = encoded_value.find('e').unwrap();
 
     let number_string = &encoded_value[1..index_end];
@@ -54,7 +54,7 @@ fn decode_integer(encoded_value: &str) -> (serde_json::Value, usize) {
 }
 
 fn decode_string(encoded_value: &str) -> (serde_json::Value, usize) {
-    // Example: "5:hello" -> "hello"
+    // Example: "5:hello" -> ("hello", 7)
     let index_colon = encoded_value.find(':').unwrap();
 
     let length_string = &encoded_value[..index_colon];
