@@ -16,9 +16,7 @@ fn decode_bencoded_value(encoded_value: &str) -> serde_json::Value {
 
 fn decode_list(encoded_value: &str) -> serde_json::Value {
     let mut items: Vec<serde_json::Value> = Vec::new();
-
     let mut index_start = 1;
-
     let mut done = false;
 
     while !done {
@@ -38,6 +36,7 @@ fn decode_list(encoded_value: &str) -> serde_json::Value {
             }
         }
     }
+
     return serde_json::Value::Array(items);
 }
 
@@ -57,6 +56,7 @@ fn decode_integer(encoded_value: &str) -> (serde_json::Value, usize) {
 fn decode_string(encoded_value: &str) -> (serde_json::Value, usize) {
     // Example: "5:hello" -> "hello"
     let index_colon = encoded_value.find(':').unwrap();
+
     let length_string = &encoded_value[..index_colon];
     let length: usize = length_string.parse().unwrap();
 
