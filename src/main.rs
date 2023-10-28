@@ -9,7 +9,7 @@ fn decode_bencoded_value(encoded_value: &str) -> serde_json::Value {
 
     return match bencode_type {
         'l' => decode_list(&encoded_value),
-        'i' => decode_integer(&encoded_value),
+        'i' => decode_integer(&encoded_value).0,
         _ => decode_string(&encoded_value),
     };
 }
@@ -28,14 +28,9 @@ fn decode_list(encoded_value: &str) -> serde_json::Value {
         match symbol {
             'e' => done = true,
             'i' => {
-                let index_end = index_start + encoded_value[index_start..].find('e').unwrap();
-
-                let number_string = &encoded_value[index_start + 1..index_end];
-                let number: usize = number_string.parse().unwrap();
-
-                items.push(serde_json::Value::Number(serde_json::Number::from(number)));
-
-                index_start = index_end + 1;
+                let (number, length) = decode_integer(&encoded_value[index_start..]);
+                items.push(number);
+                index_start += length + 1;
             }
             _ => {
                 let index_colon = index_start + encoded_value[index_start..].find(':').unwrap();
@@ -55,16 +50,17 @@ fn decode_list(encoded_value: &str) -> serde_json::Value {
     return serde_json::Value::Array(items);
 }
 
-fn decode_integer(encoded_value: &str) -> serde_json::Value {
+fn decode_integer(encoded_value: &str) -> (serde_json::Value, usize) {
     // Example: "i52e" -> "52"
-    let number: i64 = encoded_value
-        .strip_prefix("i")
-        .unwrap()
-        .strip_suffix("e")
-        .unwrap()
-        .parse()
-        .unwrap();
-    return serde_json::Value::Number(serde_json::Number::from(number));
+    let index_end = encoded_value.find('e').unwrap();
+
+    let number_string = &encoded_value[1..index_end];
+    let number: usize = number_string.parse().unwrap();
+
+    return (
+        serde_json::Value::Number(serde_json::Number::from(number)),
+        index_end,
+    );
 }
 
 fn decode_string(encoded_value: &str) -> serde_json::Value {
