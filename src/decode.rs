@@ -10,38 +10,7 @@ pub fn decode_bencoded_value(encoded_value: &str) -> serde_json::Value {
     };
 }
 
-fn decode_list(encoded_value: &str) -> (serde_json::Value, usize) {
-    let mut items: Vec<serde_json::Value> = Vec::new();
-    let mut index_start = 1;
-    let mut done = false;
-
-    while !done {
-        let symbol = encoded_value.chars().nth(index_start).unwrap();
-
-        match symbol {
-            'e' => done = true,
-            'l' => {
-                let (list, length) = decode_list(&encoded_value[index_start..]);
-                items.push(list);
-                index_start += length + 1;
-            }
-            'i' => {
-                let (number, length) = decode_integer(&encoded_value[index_start..]);
-                items.push(number);
-                index_start += length + 1;
-            }
-            _ => {
-                let (string, length) = decode_string(&encoded_value[index_start..]);
-                items.push(string);
-                index_start += length;
-            }
-        }
-    }
-
-    return (serde_json::Value::Array(items), index_start);
-}
-
-pub fn decode_integer(encoded_value: &str) -> (serde_json::Value, usize) {
+fn decode_integer(encoded_value: &str) -> (serde_json::Value, usize) {
     // Example: "i52e" -> ("52", 4)
     let index_end = encoded_value.find('e').unwrap();
 
@@ -73,6 +42,37 @@ mod tests {
             )
         }
     }
+}
+
+fn decode_list(encoded_value: &str) -> (serde_json::Value, usize) {
+    let mut items: Vec<serde_json::Value> = Vec::new();
+    let mut index_start = 1;
+    let mut done = false;
+
+    while !done {
+        let symbol = encoded_value.chars().nth(index_start).unwrap();
+
+        match symbol {
+            'e' => done = true,
+            'l' => {
+                let (list, length) = decode_list(&encoded_value[index_start..]);
+                items.push(list);
+                index_start += length + 1;
+            }
+            'i' => {
+                let (number, length) = decode_integer(&encoded_value[index_start..]);
+                items.push(number);
+                index_start += length + 1;
+            }
+            _ => {
+                let (string, length) = decode_string(&encoded_value[index_start..]);
+                items.push(string);
+                index_start += length;
+            }
+        }
+    }
+
+    return (serde_json::Value::Array(items), index_start);
 }
 
 fn decode_string(encoded_value: &str) -> (serde_json::Value, usize) {
