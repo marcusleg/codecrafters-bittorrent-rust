@@ -71,35 +71,11 @@ fn decode_list(encoded_value: &str) -> (serde_json::Value, usize) {
 
     let mut items: Vec<serde_json::Value> = Vec::new();
     let mut index_start = 1;
-    let mut done = false;
 
-    while !done {
-        let symbol = encoded_value.chars().nth(index_start).unwrap();
-
-        match symbol {
-            // TODO refactor to use decode_bencoded_value()
-            'd' => {
-                let (dictionary, length) = decode_dictionary(&encoded_value[index_start..]);
-                items.push(dictionary);
-                index_start += length;
-            }
-            'e' => done = true,
-            'l' => {
-                let (list, length) = decode_list(&encoded_value[index_start..]);
-                items.push(list);
-                index_start += length;
-            }
-            'i' => {
-                let (number, length) = decode_integer(&encoded_value[index_start..]);
-                items.push(number);
-                index_start += length;
-            }
-            _ => {
-                let (string, length) = decode_string(&encoded_value[index_start..]);
-                items.push(string);
-                index_start += length;
-            }
-        }
+    while encoded_value.chars().nth(index_start).unwrap() != 'e' {
+        let (item, length) = decode_bencoded_value(&encoded_value[index_start..]);
+        items.push(item);
+        index_start += length
     }
 
     return (serde_json::Value::Array(items), index_start + 1);
