@@ -53,6 +53,27 @@ fn decode_integer(encoded_value: &str) -> (serde_json::Value, usize) {
     );
 }
 
+#[cfg(test)]
+mod tests {
+    use crate::decode_integer;
+
+    #[test]
+    fn test_decode_integer() {
+        let test_cases = [("i52e", 52), ("i-52e", -52), ("i606e", 606)];
+
+        for test_case in test_cases {
+            let input = test_case.0;
+            let expected_value = serde_json::Value::Number(serde_json::Number::from(test_case.1));
+            let expected_index_offset = test_case.0.len() - 1;
+
+            assert_eq!(
+                decode_integer(input),
+                (expected_value, expected_index_offset)
+            )
+        }
+    }
+}
+
 fn decode_string(encoded_value: &str) -> (serde_json::Value, usize) {
     // Example: "5:hello" -> ("hello", 7)
     let index_colon = encoded_value.find(':').unwrap();
