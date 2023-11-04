@@ -4,13 +4,13 @@ pub fn decode_bencoded_value(encoded_value: &str) -> serde_json::Value {
     let bencode_type = encoded_value.chars().next().unwrap();
 
     return match bencode_type {
-        'l' => decode_list(&encoded_value),
+        'l' => decode_list(&encoded_value).0,
         'i' => decode_integer(&encoded_value).0,
         _ => decode_string(&encoded_value).0,
     };
 }
 
-fn decode_list(encoded_value: &str) -> serde_json::Value {
+fn decode_list(encoded_value: &str) -> (serde_json::Value, usize) {
     let mut items: Vec<serde_json::Value> = Vec::new();
     let mut index_start = 1;
     let mut done = false;
@@ -20,6 +20,11 @@ fn decode_list(encoded_value: &str) -> serde_json::Value {
 
         match symbol {
             'e' => done = true,
+            'l' => {
+                let (list, length) = decode_list(&encoded_value[index_start..]);
+                items.push(list);
+                index_start += length + 1;
+            }
             'i' => {
                 let (number, length) = decode_integer(&encoded_value[index_start..]);
                 items.push(number);
@@ -33,7 +38,7 @@ fn decode_list(encoded_value: &str) -> serde_json::Value {
         }
     }
 
-    return serde_json::Value::Array(items);
+    return (serde_json::Value::Array(items), index_start);
 }
 
 pub fn decode_integer(encoded_value: &str) -> (serde_json::Value, usize) {
