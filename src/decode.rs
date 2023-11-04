@@ -1,13 +1,35 @@
 use serde_json;
+use serde_json::Map;
 
-pub fn decode_bencoded_value(encoded_value: &str) -> serde_json::Value {
+pub fn decode_bencoded_value(encoded_value: &str) -> (serde_json::Value, usize) {
     let bencode_type = encoded_value.chars().next().unwrap();
 
     return match bencode_type {
-        'l' => decode_list(&encoded_value).0,
-        'i' => decode_integer(&encoded_value).0,
-        _ => decode_string(&encoded_value).0,
+        'd' => decode_dictionary(&encoded_value),
+        'l' => decode_list(&encoded_value),
+        'i' => decode_integer(&encoded_value),
+        _ => decode_string(&encoded_value),
     };
+}
+
+fn decode_dictionary(encoded_value: &str) -> (serde_json::Value, usize) {
+    // Example: "d3:foo3:bar5:helloi52ee" -> {"foo":"bar", "hello":52}
+    assert_eq!(&encoded_value.chars().next().unwrap(), &'d');
+
+    let mut items: Map<String, serde_json::Value> = Map::new();
+
+    let mut index_start = 1;
+    while encoded_value.chars().nth(index_start).unwrap() != 'e' {
+        let (key, key_index_offset) = decode_string(&encoded_value[index_start..]);
+        index_start += key_index_offset;
+
+        let (value, value_index_offset) = decode_bencoded_value(&encoded_value[index_start..]);
+        index_start += value_index_offset;
+
+        items.insert(key.as_str().unwrap().to_string(), value);
+    }
+
+    return (serde_json::Value::Object(items), index_start + 1);
 }
 
 fn decode_integer(encoded_value: &str) -> (serde_json::Value, usize) {
@@ -19,7 +41,7 @@ fn decode_integer(encoded_value: &str) -> (serde_json::Value, usize) {
 
     return (
         serde_json::Value::Number(serde_json::Number::from(number)),
-        index_end,
+        index_end + 1,
     );
 }
 
@@ -45,6 +67,8 @@ mod tests {
 }
 
 fn decode_list(encoded_value: &str) -> (serde_json::Value, usize) {
+    assert_eq!(&encoded_value.chars().next().unwrap(), &'l');
+
     let mut items: Vec<serde_json::Value> = Vec::new();
     let mut index_start = 1;
     let mut done = false;
@@ -53,16 +77,22 @@ fn decode_list(encoded_value: &str) -> (serde_json::Value, usize) {
         let symbol = encoded_value.chars().nth(index_start).unwrap();
 
         match symbol {
+            // TODO refactor to use decode_bencoded_value()
+            'd' => {
+                let (dictionary, length) = decode_dictionary(&encoded_value[index_start..]);
+                items.push(dictionary);
+                index_start += length;
+            }
             'e' => done = true,
             'l' => {
                 let (list, length) = decode_list(&encoded_value[index_start..]);
                 items.push(list);
-                index_start += length + 1;
+                index_start += length;
             }
             'i' => {
                 let (number, length) = decode_integer(&encoded_value[index_start..]);
                 items.push(number);
-                index_start += length + 1;
+                index_start += length;
             }
             _ => {
                 let (string, length) = decode_string(&encoded_value[index_start..]);
@@ -72,7 +102,7 @@ fn decode_list(encoded_value: &str) -> (serde_json::Value, usize) {
         }
     }
 
-    return (serde_json::Value::Array(items), index_start);
+    return (serde_json::Value::Array(items), index_start + 1);
 }
 
 fn decode_string(encoded_value: &str) -> (serde_json::Value, usize) {
