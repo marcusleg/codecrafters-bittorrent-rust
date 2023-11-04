@@ -18,18 +18,18 @@ fn decode_dictionary(encoded_value: &str) -> (serde_json::Value, usize) {
 
     let mut items: Map<String, serde_json::Value> = Map::new();
 
-    let mut index_start = 1;
-    while encoded_value.chars().nth(index_start).unwrap() != 'e' {
-        let (key, key_index_offset) = decode_string(&encoded_value[index_start..]);
-        index_start += key_index_offset;
+    let mut index = 1;
+    while encoded_value.chars().nth(index).unwrap() != 'e' {
+        let (key, key_index_offset) = decode_string(&encoded_value[index..]);
+        index += key_index_offset;
 
-        let (value, value_index_offset) = decode_bencoded_value(&encoded_value[index_start..]);
-        index_start += value_index_offset;
+        let (value, value_index_offset) = decode_bencoded_value(&encoded_value[index..]);
+        index += value_index_offset;
 
         items.insert(key.as_str().unwrap().to_string(), value);
     }
 
-    return (serde_json::Value::Object(items), index_start + 1);
+    return (serde_json::Value::Object(items), index + 1);
 }
 
 fn decode_integer(encoded_value: &str) -> (serde_json::Value, usize) {
@@ -70,15 +70,15 @@ fn decode_list(encoded_value: &str) -> (serde_json::Value, usize) {
     assert_eq!(&encoded_value.chars().next().unwrap(), &'l');
 
     let mut items: Vec<serde_json::Value> = Vec::new();
-    let mut index_start = 1;
+    let mut index = 1;
 
-    while encoded_value.chars().nth(index_start).unwrap() != 'e' {
-        let (item, length) = decode_bencoded_value(&encoded_value[index_start..]);
+    while encoded_value.chars().nth(index).unwrap() != 'e' {
+        let (item, length) = decode_bencoded_value(&encoded_value[index..]);
         items.push(item);
-        index_start += length
+        index += length
     }
 
-    return (serde_json::Value::Array(items), index_start + 1);
+    return (serde_json::Value::Array(items), index + 1);
 }
 
 fn decode_string(encoded_value: &str) -> (serde_json::Value, usize) {
