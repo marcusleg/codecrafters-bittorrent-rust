@@ -45,7 +45,7 @@ fn decode_integer(encoded_value: &str) -> (serde_json::Value, usize) {
     let index_end = encoded_value.find('e').unwrap();
 
     let number_string = &encoded_value[1..index_end];
-    let number: usize = number_string.parse().unwrap();
+    let number: i64 = number_string.parse().unwrap();
 
     return (
         serde_json::Value::Number(serde_json::Number::from(number)),
