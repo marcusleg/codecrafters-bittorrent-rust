@@ -17,9 +17,13 @@ struct TorrentInfo {
     pieces: serde_bytes::ByteBuf,
 }
 
-pub fn info(file_name: &str) {
+pub fn parse(file_name: &str) -> Torrent {
     let file_contents = fs::read(file_name).unwrap();
-    let decoded_file_contents: Torrent = serde_bencode::from_bytes(&file_contents).unwrap();
+    return serde_bencode::from_bytes(&file_contents).unwrap();
+}
+
+pub fn info(file_name: &str) {
+    let decoded_file_contents = parse(file_name);
 
     let info_hash = calculate_info_hash(&decoded_file_contents.info);
 
