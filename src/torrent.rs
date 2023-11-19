@@ -33,5 +33,5 @@ fn calculate_info_hash(torrent_info: &TorrentInfo) -> Vec<u8> {
 
     let mut hasher = Sha1::new();
     hasher.update(&encoded_torrent_info);
-    return hasher.finalize().to_ascii_lowercase();
+    return hasher.finalize().to_vec();
 }
