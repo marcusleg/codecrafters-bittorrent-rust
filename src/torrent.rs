@@ -31,7 +31,7 @@ pub fn info(file_name: &str) {
     decoded_file_contents
         .info
         .pieces
-        .chunks(20)
+        .chunks_exact(20)
         .for_each(|hash| println!("{}", hex::encode(hash)));
 }
 
