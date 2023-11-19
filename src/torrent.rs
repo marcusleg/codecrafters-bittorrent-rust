@@ -3,18 +3,18 @@ use sha1::{Digest, Sha1};
 use std::fs;
 
 #[derive(serde::Serialize, serde::Deserialize, PartialEq, Eq, Debug)]
-struct Torrent {
-    announce: String,
-    info: TorrentInfo,
+pub struct Torrent {
+    pub announce: String,
+    pub info: TorrentInfo,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, PartialEq, Eq, Debug)]
-struct TorrentInfo {
-    name: String,
-    length: usize,
+pub struct TorrentInfo {
+    pub name: String,
+    pub length: usize,
     #[serde(rename = "piece length")]
-    piece_length: usize,
-    pieces: serde_bytes::ByteBuf,
+    pub piece_length: usize,
+    pub pieces: serde_bytes::ByteBuf,
 }
 
 pub fn parse(file_name: &str) -> Torrent {
@@ -39,7 +39,7 @@ pub fn info(file_name: &str) {
         .for_each(|hash| println!("{}", hex::encode(hash)));
 }
 
-fn calculate_info_hash(torrent_info: &TorrentInfo) -> [u8; 20] {
+pub fn calculate_info_hash(torrent_info: &TorrentInfo) -> [u8; 20] {
     let encoded_torrent_info = serde_bencode::to_bytes(torrent_info).unwrap();
 
     let mut hasher = Sha1::new();
