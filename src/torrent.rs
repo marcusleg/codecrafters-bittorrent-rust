@@ -28,10 +28,10 @@ pub fn info(file_name: &str) {
     println!("Info Hash: {}", hex::encode(info_hash));
 }
 
-fn calculate_info_hash(torrent_info: &TorrentInfo) -> Vec<u8> {
+fn calculate_info_hash(torrent_info: &TorrentInfo) -> [u8; 20] {
     let encoded_torrent_info = serde_bencode::to_bytes(torrent_info).unwrap();
 
     let mut hasher = Sha1::new();
     hasher.update(&encoded_torrent_info);
-    return hasher.finalize().to_vec();
+    return hasher.finalize().into();
 }
