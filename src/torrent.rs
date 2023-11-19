@@ -26,6 +26,13 @@ pub fn info(file_name: &str) {
     println!("Tracker URL: {}", decoded_file_contents.announce);
     println!("Length: {}", decoded_file_contents.info.length);
     println!("Info Hash: {}", hex::encode(info_hash));
+    println!("Piece: {}", decoded_file_contents.info.piece_length);
+    println!("Piece hashes:");
+    decoded_file_contents
+        .info
+        .pieces
+        .chunks(20)
+        .for_each(|hash| println!("{}", hex::encode(hash)));
 }
 
 fn calculate_info_hash(torrent_info: &TorrentInfo) -> [u8; 20] {
